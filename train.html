@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Train Time Sheet</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
+    
+
+<!-- CSS AND STYLING -->
+
+    <style type="text/css">
+    .jumbotron {
+        margin-right: 69px;
+        margin-left: 69px;
+        background-color: blue;
+        color: white;
+        padding-right: 30px;
+        padding-left: 80px;
+    }
+    
+    .panel-default>.panel-heading {
+        background-color: #2e91ca;
+        color: #ffffff;
+    }
+    </style>
+
+</head>
+
+<body>
+    <div class="jumbotron text-center">
+        <h1>Train Schedule</h1>
+        <h4>Choo Choo</h4>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Current Train Schedule</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form">
+                            <div class="form-group">
+                                <label for="name-input">Train Name</label>
+                                <input class="form-control" id="name-input" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="dest-input">Destination</label>
+                                <input class="form-control" id="dest-input" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="time-input">First Train Time (MT)</label>
+                                <input class="form-control" id="time-input" type="text">
+                            </div>
+                            <div class="form-group">
+                                <label for="freq-input">Frequency (min)</label>
+                                <input class="form-control" id="freq-input" type="text">
+                            </div>
+                            <button class="btn btn-default" id="addTrain" type="submit">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Current Train Schedule</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-hover" id="main-table">
+                            <tr>
+                                <th>Train Name</th>
+                                <th>Destination</th>
+                                <th>Frequency (min)</th>
+                                <th>Next Arrival (MT)</th>
+                                <th>Minutes Away</th>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- JAVASCRIPT || JQUERY || FIREBASE || MOMENT.JS -->
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
+    <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+    <script type="text/javascript">
+
+  // FIREBASE: TRAIN TIME SCHEDULE
+  var config = {
+    apiKey: "AIzaSyAzC16ao1jN2rVDsM2AoivWflUavfW7cQU",
+    authDomain: "train-time-schedule.firebaseapp.com",
+    databaseURL: "https://train-time-schedule.firebaseio.com",
+    projectId: "train-time-schedule",
+    storageBucket: "train-time-schedule.appspot.com",
+    messagingSenderId: "560920133941"
+  };
+  firebase.initializeApp(config);
+  var database = firebase.database();
+
+    
+
+
+    function createTableEntry(name, dest, freq, min) {
+        var row = $("<tr>");
+        var nameCol = $("<td>");
+        var destCol = $("<td>");
+        var freqCol = $("<td>");
+        var nextCol = $("<td>");
+        var minCol = $("<td>");
+        // var totalCol = $("<td>");
+
+        nameCol.text(name);
+        destCol.text(dest);
+        freqCol.text(freq);
+        //function nextCalc will have to be remade to calulate time
+        // nextCol.text(nextArrival());
+        minCol.text(min);
+        // totalCol.text(monthCalc(start) * rate);
+
+        row.append(nameCol);
+        row.append(destCol);
+        row.append(freqCol);
+        row.append(nextCol);
+        row.append(minCol);
+        // row.append(totalCol);
+        $("#main-table").append(row);
+    };
+
+        //FUNCTION TO CALCULATE NEXT ARRIVAL TIME AND MIN LEFT
+       
+       var currentTime = moment().format('HHmm');
+       var a = $("#time-input").val();
+       var arrivalTime = (currentTime - a)%currentTime;
+       var nextArrival = 0;
+       var minLeft = 0;
+
+        console.log(arrivalTime);
+
+
+
+    database.ref().on("child_added", function(snapshot) {
+
+        name = snapshot.val().name;
+        dest = snapshot.val().dest;
+        freq = snapshot.val().freq;
+        min = snapshot.val().min;
+        JSON.stringify(min);
+
+        createTableEntry(name, dest, freq, min);
+    }, function(errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
+
+    $("#addTrain").on("click", function(e) {
+        e.preventDefault();
+
+        var nameHolder = $("#name-input").val().trim();
+        var destHolder = $("#dest-input").val().trim();
+        var freqHolder = $("#freq-input").val().trim();
+        var timeHolder = $("#time-input").val().trim();
+
+
+        database.ref().push({
+            name: nameHolder,
+            dest: destHolder,
+            freq: freqHolder,
+            time: timeHolder
+        });
+        
+    });
+
+    </script>
+</body>
+
+</html>
